@@ -1,0 +1,4 @@
+functions-framework==3.*
+google-cloud-compute==1.*
+flask==3.*
+requests==2.*
