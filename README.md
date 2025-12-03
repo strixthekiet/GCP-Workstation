@@ -87,3 +87,24 @@ To test locally:
 ## 📄 License
 
 This project is licensed under the MIT License.
+
+## Post-Setup
+
+### Jellyfin Server
+
+After the Jellyfin server is deployed, you can SSH into it to set up qBittorrent.
+
+1.  Install qBittorrent-nox:
+    ```bash
+    sudo apt install qbittorrent-nox -y
+    ```
+
+2.  Run it once to accept the terms of service and get the initial password.
+    ```bash
+    qbittorrent-nox
+    ```
+
+3.  Set qBittorrent-nox to run on startup:
+    ```bash
+    crontab -l | { cat; echo '@reboot qbittorrent-nox -d'; } | crontab -
+    ```

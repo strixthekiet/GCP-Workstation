@@ -15,7 +15,7 @@ variable "cloudflare_zone_id" {}
 variable "dashboard_password" {
   description = "Password for the VM Manager Dashboard"
   type        = string
-  sensitive   = true
+  sensitive   = false
 }
 
 variable "gcp_credentials" {
@@ -32,7 +32,7 @@ variable "region" {
 
 variable "ssh_key" {
   description = "SSH key file"
-  sensitive = true
+  sensitive = false
 }
 
 variable "ssh_key_pub" {
