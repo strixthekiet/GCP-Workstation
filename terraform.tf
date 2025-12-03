@@ -5,19 +5,17 @@ terraform {
       version = "~>7.12.0"
     }
   }
-  # cloud { 
-
-  #   organization = "strixthekiet" 
-
-  #   workspaces { 
-  #     name = "strixthekiet-workstation" 
-  #   } 
+  # cloud {
+  #   organization = "strixthekiet"
+  #   workspaces {
+  #     name = "strixthekiet-workstation"
+  #   }
   # }
 }
 
 provider "google" {
-  project = var.project_id
-  region  = var.region
-  zone    = "${var.region}-a"
-  # alias = "gcp-hongkong"
+  project            = var.project_id
+  region             = var.region
+  zone               = "${var.region}-${var.zone_code}"
+  credentials        = var.gcp_credentials
 }

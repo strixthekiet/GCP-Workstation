@@ -55,7 +55,7 @@ resource "google_cloudfunctions2_function" "vm_manager" {
     service_account_email = google_service_account.vm_manager_sa.email
     environment_variables = {
       PROJECT_ID       = var.project_id
-      ZONE             = local.zone
+      ZONE             = provider::google::zone_from_id(google_compute_instance.workstation.id)
       PASSWORD         = var.dashboard_password
       NPM_GATEWAY_NAME = var.npm_gateway_name
     }

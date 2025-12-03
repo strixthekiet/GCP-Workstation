@@ -1,6 +1,5 @@
 data "google_compute_disk" "npm_gateway_pd" {
   name = "npm-gateway-pd"
-  zone = local.zone
 }
 
 resource "google_compute_instance" "npm_gateway" {
@@ -9,7 +8,6 @@ resource "google_compute_instance" "npm_gateway" {
 
   machine_type = var.npm_gateway_machine_type
   name         = "npm-gateway"
-  zone         = local.zone
 
   boot_disk {
     auto_delete = true
@@ -46,7 +44,8 @@ resource "google_compute_instance" "npm_gateway" {
 
   metadata = {
     enable-osconfig = "TRUE"
-    enable-oslogin  = "true"
+    enable-oslogin  = "false"
+    ssh-keys        = "terraform:${var.ssh_key_pub}\ndeveloper:${var.ssh_key_pub}"
   }
 
   service_account {
@@ -57,23 +56,23 @@ resource "google_compute_instance" "npm_gateway" {
   connection {
     type        = "ssh"
     host        = self.network_interface[0].access_config[0].nat_ip
-    private_key = file("key")
-    user        = local.os_login_user
+    private_key = var.ssh_key
+    user        = "terraform"
   }
 
   provisioner "file" {
     source      = "setup/setup-mount.sh"
-    destination = "/home/${local.os_login_user}/setup-mount.sh"
+    destination = "/home/terraform/setup-mount.sh"
   }
 
   provisioner "file" {
     source      = "setup/cloudflare-ddns.sh"
-    destination = "/home/${local.os_login_user}/cloudflare-ddns.sh"
+    destination = "/home/terraform/cloudflare-ddns.sh"
   }
 
   provisioner "file" {
     source      = "setup/npm-gateway-docker-compose.yml"
-    destination = "/home/${local.os_login_user}/npm-gateway-docker-compose.yml"
+    destination = "/home/terraform/npm-gateway-docker-compose.yml"
   }
 
   provisioner "remote-exec" {
@@ -85,13 +84,13 @@ resource "google_compute_instance" "npm_gateway" {
       "EXTERNAL_IFACE=$(ip route show default | awk '/default/ {print $5}' | head -1)",
       "sudo iptables -t nat -A POSTROUTING -o $EXTERNAL_IFACE -j MASQUERADE && sudo netfilter-persistent save",
       "sudo apt install -y curl cron",
-      "chmod +x /home/${local.os_login_user}/setup-mount.sh && sudo /home/${local.os_login_user}/setup-mount.sh /npm-gateway-data ${data.google_compute_disk.npm_gateway_pd.name}",
+      "chmod +x /home/terraform/setup-mount.sh && sudo /home/terraform/setup-mount.sh /npm-gateway-data ${data.google_compute_disk.npm_gateway_pd.name}",
 
-      "chmod +x /home/${local.os_login_user}/cloudflare-ddns.sh && sudo /home/${local.os_login_user}/cloudflare-ddns.sh ${var.cloudflare_api_token} ${var.cloudflare_zone_id} ${join(" ", var.cloudflare_dns_records)}",
-      "(crontab -l | { cat; echo \"@reboot /home/${local.os_login_user}/cloudflare-ddns.sh ${var.cloudflare_api_token} ${var.cloudflare_zone_id} ${join(" ", var.cloudflare_dns_records)} >/dev/null 2>&1\"; }) | crontab -",
-      "crontab -l | { cat; echo \"*/10 * * * * /home/${local.os_login_user}/cloudflare-ddns.sh ${var.cloudflare_api_token} ${var.cloudflare_zone_id} ${join(" ", var.cloudflare_dns_records)} >/dev/null 2>&1\"; } | crontab -",
+      "chmod +x /home/terraform/cloudflare-ddns.sh && sudo /home/terraform/cloudflare-ddns.sh ${var.cloudflare_api_token} ${var.cloudflare_zone_id} ${join(" ", var.cloudflare_dns_records)}",
+      "(crontab -l | { cat; echo \"@reboot /home/terraform/cloudflare-ddns.sh ${var.cloudflare_api_token} ${var.cloudflare_zone_id} ${join(" ", var.cloudflare_dns_records)} >/dev/null 2>&1\"; }) | crontab -",
+      "crontab -l | { cat; echo \"*/10 * * * * /home/terraform/cloudflare-ddns.sh ${var.cloudflare_api_token} ${var.cloudflare_zone_id} ${join(" ", var.cloudflare_dns_records)} >/dev/null 2>&1\"; } | crontab -",
 
-      "curl -fsSL https://get.docker.com | sudo sh && sudo docker compose -f /home/${local.os_login_user}/npm-gateway-docker-compose.yml up -d"
+      "curl -fsSL https://get.docker.com | sudo sh && sudo docker compose -f /home/terraform/npm-gateway-docker-compose.yml up -d"
     ]
   }
 }

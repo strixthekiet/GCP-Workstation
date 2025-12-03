@@ -1,6 +1,5 @@
 data "google_compute_disk" "workstation_pd" {
   name = "workstation-pd"
-  zone = local.zone
 }
 
 resource "google_compute_instance" "workstation" {
@@ -8,7 +7,6 @@ resource "google_compute_instance" "workstation" {
   enable_display = false
   machine_type   = var.workstation_machine_type
   name           = "workstation"
-  zone           = local.zone
   tags           = [var.route-internet-via-npm-gateway-tag]
 
   boot_disk {
@@ -43,7 +41,8 @@ resource "google_compute_instance" "workstation" {
 
   metadata = {
     enable-osconfig = "TRUE"
-    enable-oslogin  = "true"
+    enable-oslogin  = "false"
+    ssh-keys        = "terraform:${var.ssh_key_pub}\ndeveloper:${var.ssh_key_pub}"
   }
 
   service_account {
@@ -54,16 +53,16 @@ resource "google_compute_instance" "workstation" {
   connection {
     type                = "ssh"
     host                = self.network_interface[0].network_ip
-    private_key         = file("key")
-    user                = local.os_login_user
+    private_key         = var.ssh_key
+    user                = "terraform"
     bastion_host        = google_compute_instance.npm_gateway.network_interface[0].access_config[0].nat_ip
-    bastion_user        = local.os_login_user
-    bastion_private_key = file("key")
+    bastion_user        = "terraform"
+    bastion_private_key = var.ssh_key
   }
 
   provisioner "file" {
     source      = "setup/setup-mount.sh"
-    destination = "/home/${local.os_login_user}/setup-mount.sh"
+    destination = "/home/terraform/setup-mount.sh"
   }
 
 
@@ -71,7 +70,7 @@ resource "google_compute_instance" "workstation" {
     inline = [
       "sudo apt update -y",
       "sudo apt install -y curl wget git",
-      "chmod +x /home/${local.os_login_user}/setup-mount.sh && sudo /home/${local.os_login_user}/setup-mount.sh /workstation-data ${data.google_compute_disk.workstation_pd.name}",
+      "chmod +x /home/terraform/setup-mount.sh && sudo /home/terraform/setup-mount.sh /workstation-data ${data.google_compute_disk.workstation_pd.name}",
       "curl -fsSL https://get.docker.com | sudo sh",
       "curl -LO \"https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl\" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl",
     ]
