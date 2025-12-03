@@ -1,6 +1,5 @@
 data "google_compute_disk" "npm_gateway_pd" {
   name = "npm-gateway-pd"
-  zone = local.zone
 }
 
 resource "google_compute_instance" "npm_gateway" {
@@ -9,7 +8,6 @@ resource "google_compute_instance" "npm_gateway" {
 
   machine_type = var.npm_gateway_machine_type
   name         = "npm-gateway"
-  zone         = local.zone
 
   boot_disk {
     auto_delete = true
@@ -57,7 +55,7 @@ resource "google_compute_instance" "npm_gateway" {
   connection {
     type        = "ssh"
     host        = self.network_interface[0].access_config[0].nat_ip
-    private_key = file("key")
+    private_key = var.ssh_key
     user        = local.os_login_user
   }
 

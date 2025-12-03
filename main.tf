@@ -1,24 +1,20 @@
-locals {
-  zone          = "${var.region}-b"
-  os_login_user = replace(replace(data.google_client_openid_userinfo.me.email, "@", "_"), ".", "_")
-}
-
 resource "google_service_account" "gcpce_vm_sa" {
   account_id   = "workstation-sa"
   display_name = "Workstation Service Account"
 }
 
-# resource "google_project_iam_member" "storage_access" {
-#  project = var.project_id
-#  role    = "roles/storage.admin"
-#  member  = "serviceAccount:${google_service_account.gcpce_vm_sa.email}"
-# }
+# get HCP terraform email or current user email, depends on where TF is executed
+data "google_client_openid_userinfo" "me" {}
 
-data "google_client_openid_userinfo" "me" {
+locals {
+  os_login_user = replace(replace(data.google_client_openid_userinfo.me.email, "@", "_"), ".", "_")
+}
+
+output "ssh_user" {
+  value = local.os_login_user
 }
 
 resource "google_os_login_ssh_public_key" "default" {
   user = data.google_client_openid_userinfo.me.email
-  key  = file("key.pub") # path/to/ssl/id_rsa.pub
+  key  = var.ssh_key_pub
 }
-
