@@ -39,6 +39,10 @@ variable "ssh_key_pub" {
   description = "SSH key public file"
 }
 
+variable "ssh_user" {
+  description = "user name to SSH to the VMs"
+}
+
 variable "zone_code" {
   validation {
     condition     = contains(["a", "b", "c"], var.zone_code)
