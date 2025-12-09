@@ -42,7 +42,7 @@ resource "google_compute_instance" "workstation" {
   metadata = {
     enable-osconfig = "TRUE"
     enable-oslogin  = "false"
-    ssh-keys        = "terraform:${var.ssh_key_pub}\ndeveloper:${var.ssh_key_pub}"
+    ssh-keys        = "terraform:${var.ssh_key_pub}\n${var.ssh_user}:${var.ssh_key_pub}"
   }
 
   service_account {
